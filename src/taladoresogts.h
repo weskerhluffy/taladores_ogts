@@ -12,16 +12,17 @@
 #define TALADORESOGTS_H_
 
 #define TALADORES_OGTS_MAX_FILAS_INPUT 3
-#define TALADORES_OGTS_MAX_COLS_INPUT 100000
+#define TALADORES_OGTS_MAX_COLS_INPUT (long)10E5
 
-#define TALADORES_OGTS_VALOR_INVALIDO 10E12
+#define TALADORES_OGTS_VALOR_INVALIDO (long)10E12
+#define TALADORES_OGTS_MAX_ELEMS TALADORES_OGTS_MAX_COLS_INPUT
 
 typedef struct taladores_ogts_pseudopila_lineas {
 	tipo_dato indice_caminado_intersexion;
 	tipo_dato total_intersexiones;
 	tipo_dato total_lineas;
-	double *ordenadas_de_intersexiones;
-	tipo_dato *indices_lineas;
+	double ordenadas_de_intersexiones[TALADORES_OGTS_MAX_ELEMS];
+	tipo_dato indices_lineas[TALADORES_OGTS_MAX_ELEMS];
 } taladores_ogts_pseudopila_lineas;
 
 tipo_dato num_arboles;
@@ -44,5 +45,8 @@ tipo_dato taladores_ogts_busca_minimo(tipo_dato indice_linea,
 void taladores_ogts_encuentra_chosto_minimo();
 
 double taladores_ogts_main();
+
+void taladores_ogts_init_pseudo_pila(
+		taladores_ogts_pseudopila_lineas *pseudopila);
 
 #endif /* TALADORESOGTS_H_ */

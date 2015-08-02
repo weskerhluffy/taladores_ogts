@@ -40,3 +40,5 @@ tests/.libs/check_taladoresogts
 tests/check_taladoresogts.log
 
 tests/test-suite.log
+
+cat
