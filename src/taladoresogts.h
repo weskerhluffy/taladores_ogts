@@ -17,7 +17,7 @@
 #define TALADORES_OGTS_VALOR_INVALIDO (long)10E12
 #define TALADORES_OGTS_MAX_ELEMS TALADORES_OGTS_MAX_COLS_INPUT
 
-#define TALADORES_OGTS_MAX_VALOR 10E9
+#define TALADORES_OGTS_MAX_VALOR (long)10E9
 
 typedef struct taladores_ogts_pseudopila_lineas {
 	tipo_dato indice_caminado_intersexion;

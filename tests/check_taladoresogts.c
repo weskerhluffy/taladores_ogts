@@ -142,6 +142,80 @@ START_TEST(test_basica)
 		}
 	}END_TEST
 
+#undef NUM_ELEMENTOS
+//#define NUM_ELEMENTOS  TALADORES_OGTS_MAX_ELEMS
+#define NUM_ELEMENTOS  50
+START_TEST(test_stress)
+	{
+		const tipo_dato VALOR_ESPERADO = 9510770918594932224ULL;
+
+		int ptyfd = 0;
+		int pid = 0;
+		char buf[1000] = { 0 };
+
+		tipo_dato resultado_real = 0;
+		tipo_dato saltito = 0;
+
+		saltito = TALADORES_OGTS_MAX_VALOR / NUM_ELEMENTOS;
+
+		printf("you were the last one \n");
+
+		resultado_assestment = mmap(NULL, sizeof *resultado_assestment,
+				PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, -1, 0);
+
+		printf("antes de forkear\n");
+		pid = forkpty(&ptyfd, 0, 0, 0);
+		if (pid < 0) {
+			perror("forkpty no c pudo acer"), abort();
+		}
+
+		*resultado_assestment = -1;
+		if (!pid) {
+
+			taladores_ogts_main();
+			resultado_real = *(chostos_minimos + NUM_ELEMENTOS );
+
+			*resultado_assestment = (resultado_real == VALOR_ESPERADO);
+
+		} else {
+			sprintf(buf, "%lu\n", NUM_ELEMENTOS);
+			write(ptyfd, buf, strlen(buf));
+
+			sprintf(buf, "%lu", (long )1);
+			write(ptyfd, buf, strlen(buf));
+			for (int i = 1; i < NUM_ELEMENTOS - 1; i++) {
+				sprintf(buf, " %lu", i * saltito);
+				write(ptyfd, buf, strlen(buf));
+			}
+			sprintf(buf, " %lu\n", TALADORES_OGTS_MAX_VALOR);
+			write(ptyfd, buf, strlen(buf));
+
+			sprintf(buf, "%lu", TALADORES_OGTS_MAX_VALOR);
+			write(ptyfd, buf, strlen(buf));
+			for (int i = 1; i < NUM_ELEMENTOS - 1; i++) {
+				sprintf(buf, " %lu", TALADORES_OGTS_MAX_VALOR - i * saltito);
+				write(ptyfd, buf, strlen(buf));
+			}
+			sprintf(buf, " %lu\n", (long )0);
+			write(ptyfd, buf, strlen(buf));
+
+			write(ptyfd, EOT, 1);
+		}
+
+		if (pid) {
+			while (*resultado_assestment < 0) {
+				printf("puta madre, esperando...\n");
+				sleep(5);
+			}
+			printf("cerrando todo\n");
+			close(ptyfd);
+			ck_assert_msg(*resultado_assestment > 0,
+					"no corresponde ni madres");
+		} else {
+
+		}
+	}END_TEST
+
 Suite *
 taladoresogts_suite(void) {
 	Suite *s = suite_create("taladoras de troncos");
@@ -154,7 +228,8 @@ taladoresogts_suite(void) {
 #endif
 //	tcase_add_test(tc_core, test_caca);
 //	tcase_add_test(tc_core, test_caca_max);
-	tcase_add_test(tc_core, test_basica);
+//	tcase_add_test(tc_core, test_basica);
+	tcase_add_test(tc_core, test_stress);
 
 	suite_add_tcase(s, tc_core);
 
