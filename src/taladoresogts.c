@@ -1,7 +1,14 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <assert.h>
 #include <cacacomun.h>
 #include "../src/taladoresogts.h"
+
+/*
+ #undef caca_log_debug
+ #define caca_log_debug(formato, args...) 0
+ */
 
 /* Formula x = (b2 - b1)/(x1 - x2) */
 double taladores_ogts_determina_ordenada_interseccion(
@@ -176,7 +183,7 @@ void taladores_ogts_encuentra_chosto_minimo() {
 
 		*(chostos_minimos + i) = *(chostos_minimos + dependiente_minima)
 				+ *(alturas_arboles + i) * *(costos_corte + dependiente_minima);
-		caca_log_debug("el minimo costo para cortar %d es %d", i,
+		caca_log_debug("el minimo costo para cortar %d es %lu", i,
 				*(chostos_minimos + i));
 	}
 }
@@ -190,4 +197,59 @@ void taladores_ogts_init_pseudo_pila(
 		*(pseudopila->ordenadas_de_intersexiones + i) =
 				TALADORES_OGTS_VALOR_INVALIDO;
 	}
+}
+
+void taladores_ogts_main() {
+	int i = 0;
+	char buffer[MAX_TAM_CADENA*5] = { 0 };
+	tipo_dato *datos_arboles = NULL;
+
+	caca_log_debug("me corto los tanates");
+
+
+	datos_arboles = calloc(
+			TALADORES_OGTS_MAX_COLS_INPUT * TALADORES_OGTS_MAX_FILAS_INPUT,
+			sizeof(tipo_dato));
+	assert(datos_arboles);
+
+	lee_matrix_long_stdin((tipo_dato *) datos_arboles, &i, NULL,
+			TALADORES_OGTS_MAX_FILAS_INPUT + 1, TALADORES_OGTS_MAX_COLS_INPUT);
+	caca_log_debug("la matrix leida");
+	caca_imprime_matrix(datos_arboles, TALADORES_OGTS_MAX_FILAS_INPUT, NULL,
+			TALADORES_OGTS_MAX_COLS_INPUT);
+
+	num_arboles = *(datos_arboles);
+
+	assert(num_arboles <= TALADORES_OGTS_MAX_ELEMS);
+
+	chostos_minimos = calloc(num_arboles + 1, sizeof(tipo_dato));
+	costos_corte = calloc(num_arboles + 1, sizeof(tipo_dato));
+	alturas_arboles = calloc(num_arboles + 1, sizeof(tipo_dato));
+	assert(chostos_minimos && chostos_minimos && alturas_arboles);
+
+	memcpy((alturas_arboles + 1),
+			datos_arboles + TALADORES_OGTS_MAX_COLS_INPUT,
+			num_arboles * sizeof(tipo_dato));
+	memcpy(costos_corte + 1,
+			datos_arboles + 2*TALADORES_OGTS_MAX_COLS_INPUT,
+			num_arboles * sizeof(tipo_dato));
+
+	for (i = 0; i <= num_arboles; i++) {
+		*(chostos_minimos + i) = TALADORES_OGTS_VALOR_INVALIDO;
+	}
+	*costos_corte = TALADORES_OGTS_VALOR_INVALIDO;
+	*alturas_arboles = TALADORES_OGTS_VALOR_INVALIDO;
+
+	caca_log_debug("el num de arboles %lu", num_arboles);
+	caca_log_debug("las alturas %s",
+			caca_arreglo_a_cadena(alturas_arboles, num_arboles + 1, buffer));
+	caca_log_debug("llos chostos %s",
+			caca_arreglo_a_cadena(costos_corte, num_arboles + 1, buffer));
+
+	pseudopila = calloc(1, sizeof(taladores_ogts_pseudopila_lineas));
+
+	taladores_ogts_init_pseudo_pila(pseudopila);
+
+	taladores_ogts_encuentra_chosto_minimo();
+	caca_log_debug("q mierda pasa");
 }
