@@ -42,3 +42,5 @@ tests/check_taladoresogts.log
 tests/test-suite.log
 
 cat
+
+*.swp
