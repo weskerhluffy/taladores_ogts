@@ -11,20 +11,20 @@
 #ifndef TALADORESOGTS_H_
 #define TALADORESOGTS_H_
 
-#define TALADORES_OGTS_MAX_FILAS_INPUT 3
-#define TALADORES_OGTS_MAX_COLS_INPUT (long)10E5
+#define TALADORES_OGTS_MAX_FILAS_INPUT 2
+#define TALADORES_OGTS_MAX_COLS_INPUT (long)1E5
 
-#define TALADORES_OGTS_VALOR_INVALIDO (long)10E12
+#define TALADORES_OGTS_VALOR_INVALIDO (long)10E21
 #define TALADORES_OGTS_MAX_ELEMS TALADORES_OGTS_MAX_COLS_INPUT
 
-#define TALADORES_OGTS_MAX_VALOR (long)10E9
+#define TALADORES_OGTS_MAX_VALOR (long)1E9
 
 typedef struct taladores_ogts_pseudopila_lineas {
 	tipo_dato indice_caminado_intersexion;
 	tipo_dato total_intersexiones;
 	tipo_dato total_lineas;
-	double ordenadas_de_intersexiones[TALADORES_OGTS_MAX_ELEMS];
-	tipo_dato indices_lineas[TALADORES_OGTS_MAX_ELEMS];
+	double ordenadas_de_intersexiones[TALADORES_OGTS_MAX_ELEMS ];
+	tipo_dato indices_lineas[TALADORES_OGTS_MAX_ELEMS ];
 } taladores_ogts_pseudopila_lineas;
 
 tipo_dato num_arboles;
@@ -50,5 +50,7 @@ void taladores_ogts_main();
 
 void taladores_ogts_init_pseudo_pila(
 		taladores_ogts_pseudopila_lineas *pseudopila);
+
+static void caca_lee_matrix_dimensiones_conocidas(tipo_dato *matrix, int num_filas, int num_columnas);
 
 #endif /* TALADORESOGTS_H_ */

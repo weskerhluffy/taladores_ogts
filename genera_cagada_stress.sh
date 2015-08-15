@@ -1,6 +1,7 @@
-#!/bin/sh -x
+#!/bin/sh 
 MAX_VALOR=1000000000
 MAX_ELEMS=100000
+#MAX_ELEMS=100
 saltito=$((MAX_VALOR / MAX_ELEMS))
 salto_inicial=$((saltito * 2))
 

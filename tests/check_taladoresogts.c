@@ -59,7 +59,7 @@ START_TEST( test_caca_max)
 
 		for (int i = 1; i <= num_arboles; i++) {
 			*(chostos_minimos + i) = TALADORES_OGTS_VALOR_INVALIDO;
-			*(costos_corte + i) = TALADORES_OGTS_MAX_VALOR - i * saltito;
+			*(costos_corte + i) = TALADORES_OGTS_MAX_VALOR - (i - 1) * saltito;
 			*(alturas_arboles + i) = i * saltito;
 		}
 		*(costos_corte + num_arboles) = 0;
@@ -69,7 +69,7 @@ START_TEST( test_caca_max)
 
 		taladores_ogts_encuentra_chosto_minimo();
 
-		ck_assert_msg(*(chostos_minimos+NUM_ELEMENTOS)==9510770918594932224ULL,
+		ck_assert_msg(*(chostos_minimos+NUM_ELEMENTOS)==1000000000000000000ULL,
 				"verga, el costo min final es %lu",
 				*(chostos_minimos+NUM_ELEMENTOS));
 
@@ -147,7 +147,7 @@ START_TEST(test_basica)
 #define NUM_ELEMENTOS  50
 START_TEST(test_stress)
 	{
-		const tipo_dato VALOR_ESPERADO = 9510770918594932224ULL;
+		const tipo_dato VALOR_ESPERADO = 7766279631452241920ULL; // 1000000000000000000 ???
 
 		int ptyfd = 0;
 		int pid = 0;
@@ -171,9 +171,8 @@ START_TEST(test_stress)
 
 		*resultado_assestment = -1;
 		if (!pid) {
-
 			taladores_ogts_main();
-			resultado_real = *(chostos_minimos + NUM_ELEMENTOS );
+			resultado_real = *(chostos_minimos + NUM_ELEMENTOS);
 
 			*resultado_assestment = (resultado_real == VALOR_ESPERADO);
 

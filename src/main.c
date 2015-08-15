@@ -1,13 +1,3 @@
-/*
- ============================================================================
- Name        : taladores_ogts.c
- Author      : ernesto
- Version     :
- Copyright   : Your copyright notice
- Description : Hello World in C, Ansi-style
- ============================================================================
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -17,7 +7,7 @@
 #define tipo_dato unsigned long
 
 #define MAX_NODOS 101
-#define TAM_MAX_LINEA 1024
+#define TAM_MAX_LINEA 1.5E6
 #define TAM_MAX_NUMERO 128
 #define MAX_FILAS_INPUT 5010
 #define MAX_COLUMNAS_INPUT 256
@@ -45,13 +35,13 @@ typedef enum BOOLEANOS {
 	falso = 0, verdadero
 } bool;
 
-#define TALADORES_OGTS_MAX_FILAS_INPUT 3
-#define TALADORES_OGTS_MAX_COLS_INPUT (long)10E5
+#define TALADORES_OGTS_MAX_FILAS_INPUT 2
+#define TALADORES_OGTS_MAX_COLS_INPUT (long)1E5
 
-#define TALADORES_OGTS_VALOR_INVALIDO (long)10E12
+#define TALADORES_OGTS_VALOR_INVALIDO (long)1E21
 #define TALADORES_OGTS_MAX_ELEMS TALADORES_OGTS_MAX_COLS_INPUT
 
-#define TALADORES_OGTS_MAX_VALOR (long)10E9
+#define TALADORES_OGTS_MAX_VALOR (long)1E9
 
 typedef struct taladores_ogts_pseudopila_lineas {
 	tipo_dato indice_caminado_intersexion;
@@ -85,6 +75,9 @@ void taladores_ogts_main();
 void taladores_ogts_init_pseudo_pila(
 		taladores_ogts_pseudopila_lineas *pseudopila);
 
+static void caca_lee_matrix_dimensiones_conocidas(tipo_dato *matrix,
+		int num_filas, int num_columnas);
+
 #define caca_log_debug(formato, args...) 0
 #define caca_imprime_matrix(matrix, num_filas, num_columnas, num_columnas_fijo) 0
 
@@ -95,7 +88,9 @@ int lee_matrix_long_stdin(tipo_dato *matrix, int *num_filas, int *num_columnas,
 	long numero = 0;
 	char *siguiente_cadena_numero = NULL;
 	char *cadena_numero_actual = NULL;
-	char linea[TAM_MAX_LINEA];
+	char *linea = NULL;
+
+	linea = calloc(TAM_MAX_LINEA, sizeof(char));
 
 	while (fgets(linea, TAM_MAX_LINEA, stdin)) {
 		indice_columnas = 0;
@@ -121,8 +116,10 @@ int lee_matrix_long_stdin(tipo_dato *matrix, int *num_filas, int *num_columnas,
 			num_columnas[indice_filas] = indice_columnas;
 		}
 		indice_filas++;
-		printf("las filas son %d, con clos %d\n", indice_filas,
-				indice_columnas);
+		/*
+		 printf("las filas son %d, con clos %d\n", indice_filas,
+		 indice_columnas);
+		 */
 		if (indice_filas >= num_max_filas) {
 			perror("se leyeron demasiadas filas, a la verga");
 			abort();
@@ -130,6 +127,7 @@ int lee_matrix_long_stdin(tipo_dato *matrix, int *num_filas, int *num_columnas,
 	}
 
 	*num_filas = indice_filas;
+	free(linea);
 	return 0;
 }
 
@@ -241,9 +239,15 @@ void taladores_ogts_anade_linea(tipo_dato indice_linea) {
 tipo_dato taladores_ogts_busqueda_minimo_en_lineas(tipo_dato ordenada) {
 	int idx_intersexion = 0;
 	double ordenada_pf = 0;
-	tipo_dato minimo = 0;
 
-	ordenada_pf = ordenada;
+	bool ordenadas_iguales = falso;
+	tipo_dato minimo = 0;
+	tipo_dato chosto_min_izq = 0;
+	tipo_dato chosto_min_der = 0;
+	tipo_dato indice_linea_izq = 0;
+	tipo_dato indice_linea_der = 0;
+
+	ordenada_pf = *(alturas_arboles + ordenada);
 
 	for (idx_intersexion = pseudopila->indice_caminado_intersexion;
 			idx_intersexion < pseudopila->total_intersexiones;
@@ -258,10 +262,31 @@ tipo_dato taladores_ogts_busqueda_minimo_en_lineas(tipo_dato ordenada) {
 				< *(pseudopila->ordenadas_de_intersexiones + idx_intersexion)) {
 			break;
 		}
+		if (ordenada_pf
+				== *(pseudopila->ordenadas_de_intersexiones + idx_intersexion)) {
+			ordenadas_iguales = verdadero;
+			break;
+		}
 
 	}
 
-	minimo = *(pseudopila->indices_lineas + idx_intersexion);
+	if (ordenadas_iguales) {
+		indice_linea_izq = *(pseudopila->indices_lineas + idx_intersexion);
+		indice_linea_der = *(pseudopila->indices_lineas + idx_intersexion + 1);
+		chosto_min_izq = (tipo_dato) ordenada_pf
+				* *(costos_corte + indice_linea_izq)
+				+ *(chostos_minimos + indice_linea_izq);
+		chosto_min_der = (tipo_dato) ordenada_pf
+				* *(costos_corte + indice_linea_der)
+				+ *(chostos_minimos + indice_linea_der);
+		if (chosto_min_der < chosto_min_izq) {
+			minimo = indice_linea_der;
+		} else {
+			minimo = indice_linea_izq;
+		}
+	} else {
+		minimo = *(pseudopila->indices_lineas + idx_intersexion);
+	}
 
 	caca_log_debug("el minimo calculado es %d en pos intersex %d", minimo,
 			idx_intersexion);
@@ -300,11 +325,10 @@ void taladores_ogts_encuentra_chosto_minimo() {
 		caca_log_debug("añadiendo linea %d", i - 1);
 		dependiente_minima = taladores_ogts_busca_minimo(i - 1, i);
 
-		caca_log_debug("el dep minimo %d", dependiente_minima);
-
+		printf("el dep minimo %d\n", dependiente_minima);
 		*(chostos_minimos + i) = *(chostos_minimos + dependiente_minima)
 				+ *(alturas_arboles + i) * *(costos_corte + dependiente_minima);
-		caca_log_debug("el minimo costo para cortar %d es %lu", i,
+		printf("el minimo costo para cortar %d es %lu\n", i,
 				*(chostos_minimos + i));
 	}
 }
@@ -320,6 +344,40 @@ void taladores_ogts_init_pseudo_pila(
 	}
 }
 
+void taladores_ogts_encuentra_chosto_minimo_no_optimizado() {
+	int i = 0;
+	int j = 0;
+	tipo_dato chosto_actual = 0;
+	tipo_dato chosto_minimo = 0;
+	tipo_dato dependiente_minima = 0;
+
+	caca_log_debug("mierda");
+	*(chostos_minimos + 1) = 0;
+	*(chostos_minimos + 2) = *(costos_corte + 1) * *(alturas_arboles + 2);
+	caca_log_debug("añadiendo linea 1");
+
+	for (i = 3; i <= num_arboles; i++) {
+		caca_log_debug("encontrando chosto minimo para %d", i);
+
+		chosto_minimo = TALADORES_OGTS_VALOR_INVALIDO;
+		for (j = 1; j < i; j++) {
+			chosto_actual = *(chostos_minimos + j)
+					+ *(alturas_arboles + i) * *(costos_corte + j);
+			if (chosto_actual < chosto_minimo) {
+				chosto_minimo = chosto_actual;
+				dependiente_minima = j;
+			}
+		}
+
+		printf("el dep minimo %d\n", dependiente_minima);
+
+		*(chostos_minimos + i) = *(chostos_minimos + dependiente_minima)
+				+ *(alturas_arboles + i) * *(costos_corte + dependiente_minima);
+		printf("el minimo costo para cortar %d es %lu\n", i,
+				*(chostos_minimos + i));
+	}
+}
+
 void taladores_ogts_main() {
 	int i = 0;
 	char buffer[MAX_TAM_CADENA * 5] = { 0 };
@@ -327,18 +385,21 @@ void taladores_ogts_main() {
 
 	caca_log_debug("me corto los tanates");
 
-	datos_arboles = calloc(
-			TALADORES_OGTS_MAX_COLS_INPUT * TALADORES_OGTS_MAX_FILAS_INPUT,
+	fgets(buffer, MAX_TAM_CADENA * 5, stdin);
+	caca_log_debug("el buffer de mierda %s", buffer);
+	num_arboles = atol(buffer);
+
+	caca_log_debug("mother of fuck %lu", num_arboles);
+
+	datos_arboles = calloc(num_arboles * TALADORES_OGTS_MAX_FILAS_INPUT,
 			sizeof(tipo_dato));
 	assert(datos_arboles);
 
-	lee_matrix_long_stdin((tipo_dato *) datos_arboles, &i, NULL,
-			TALADORES_OGTS_MAX_FILAS_INPUT + 1, TALADORES_OGTS_MAX_COLS_INPUT);
+	caca_lee_matrix_dimensiones_conocidas((tipo_dato *) datos_arboles,
+			TALADORES_OGTS_MAX_FILAS_INPUT, num_arboles);
 	caca_log_debug("la matrix leida");
 	caca_imprime_matrix(datos_arboles, TALADORES_OGTS_MAX_FILAS_INPUT, NULL,
-			TALADORES_OGTS_MAX_COLS_INPUT);
-
-	num_arboles = *(datos_arboles);
+			num_arboles);
 
 	assert(num_arboles <= TALADORES_OGTS_MAX_ELEMS);
 
@@ -347,9 +408,9 @@ void taladores_ogts_main() {
 	alturas_arboles = calloc(num_arboles + 1, sizeof(tipo_dato));
 	assert(chostos_minimos && chostos_minimos && alturas_arboles);
 
-	memcpy((alturas_arboles + 1), datos_arboles + TALADORES_OGTS_MAX_COLS_INPUT,
+	memcpy((alturas_arboles + 1), datos_arboles,
 			num_arboles * sizeof(tipo_dato));
-	memcpy(costos_corte + 1, datos_arboles + 2*TALADORES_OGTS_MAX_COLS_INPUT,
+	memcpy(costos_corte + 1, datos_arboles + num_arboles,
 			num_arboles * sizeof(tipo_dato));
 
 	for (i = 0; i <= num_arboles; i++) {
@@ -364,12 +425,42 @@ void taladores_ogts_main() {
 	caca_log_debug("llos chostos %s",
 			caca_arreglo_a_cadena(costos_corte, num_arboles + 1, buffer));
 
+	if (num_arboles == 1) {
+		*(chostos_minimos + num_arboles) = 1;
+		return;
+	}
+
+	if (num_arboles == 2) {
+		*(chostos_minimos + num_arboles) = *(alturas_arboles + 2)
+				* *(costos_corte + 1);
+		return;
+	}
+
 	pseudopila = calloc(1, sizeof(taladores_ogts_pseudopila_lineas));
 
 	taladores_ogts_init_pseudo_pila(pseudopila);
 
 	taladores_ogts_encuentra_chosto_minimo();
+//	taladores_ogts_encuentra_chosto_minimo_no_optimizado();
 	caca_log_debug("q mierda pasa");
+}
+
+/* TODO: bandera para arreglo de arreglos */
+/* TODO: numero de columnas variable x fila */
+static void caca_lee_matrix_dimensiones_conocidas(tipo_dato *matrix,
+		int num_filas, int num_columnas) {
+	int idx_cols = 0;
+	int idx_fils = 0;
+	tipo_dato numero = 0;
+
+	while (scanf("%lu", &numero) == 1 && idx_fils < num_filas) {
+		*(matrix + idx_fils * num_columnas + idx_cols) = numero;
+		idx_cols++;
+		if (idx_cols == num_columnas) {
+			idx_cols = 0;
+			idx_fils++;
+		}
+	}
 }
 
 int main(void) {
