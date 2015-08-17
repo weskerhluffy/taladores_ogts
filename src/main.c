@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <assert.h>
 
+int i = 0;
+
 #define tipo_dato unsigned long
 
 #define MAX_NODOS 101
@@ -80,6 +82,7 @@ static void caca_lee_matrix_dimensiones_conocidas(tipo_dato *matrix,
 
 #define caca_log_debug(formato, args...) 0
 #define caca_imprime_matrix(matrix, num_filas, num_columnas, num_columnas_fijo) 0
+#define caca_log_debug1 printf
 
 int lee_matrix_long_stdin(tipo_dato *matrix, int *num_filas, int *num_columnas,
 		int num_max_filas, int num_max_columnas) {
@@ -116,10 +119,8 @@ int lee_matrix_long_stdin(tipo_dato *matrix, int *num_filas, int *num_columnas,
 			num_columnas[indice_filas] = indice_columnas;
 		}
 		indice_filas++;
-		/*
-		 printf("las filas son %d, con clos %d\n", indice_filas,
-		 indice_columnas);
-		 */
+		caca_log_debug("las filas son %d, con clos %d\n", indice_filas,
+				indice_columnas);
 		if (indice_filas >= num_max_filas) {
 			perror("se leyeron demasiadas filas, a la verga");
 			abort();
@@ -150,9 +151,29 @@ double taladores_ogts_determina_ordenada_interseccion(
 
 	return ordenada;
 }
+/* Formula y = (b1*m2 - b2*m1)/(m2 -m1) */
+double taladores_ogts_determina_abcisa_interseccion(
+		tipo_dato indice_valor_dinamico_1, tipo_dato indice_valor_dinamico_2) {
+	double abcisa = 0;
+	double b2 = 0;
+	double b1 = 0;
+	double m2 = 0;
+	double m1 = 0;
+
+	b2 = *(chostos_minimos + indice_valor_dinamico_2);
+	b1 = *(chostos_minimos + indice_valor_dinamico_1);
+
+	m2 = *(costos_corte + indice_valor_dinamico_2);
+	m1 = *(costos_corte + indice_valor_dinamico_1);
+
+	abcisa = (b1 * m2 - b2 * m1) / (m2 - m1);
+
+	return abcisa;
+}
 
 void taladores_ogts_anade_linea(tipo_dato indice_linea) {
 	double intersexion_nueva = 0;
+	double abcisa = 0;
 
 	switch (pseudopila->total_lineas) {
 	case 0:
@@ -179,6 +200,10 @@ void taladores_ogts_anade_linea(tipo_dato indice_linea) {
 		while (pseudopila->total_lineas > 1) {
 			intersexion_nueva =
 					taladores_ogts_determina_ordenada_interseccion(indice_linea,
+							*(pseudopila->indices_lineas
+									+ pseudopila->total_lineas - 2));
+			abcisa =
+					taladores_ogts_determina_abcisa_interseccion(indice_linea,
 							*(pseudopila->indices_lineas
 									+ pseudopila->total_lineas - 2));
 			caca_log_debug("la nueva intersexion es %f, comparandola con %f",
@@ -325,10 +350,10 @@ void taladores_ogts_encuentra_chosto_minimo() {
 		caca_log_debug("añadiendo linea %d", i - 1);
 		dependiente_minima = taladores_ogts_busca_minimo(i - 1, i);
 
-		printf("el dep minimo %d\n", dependiente_minima);
+		caca_log_debug1("el dep minimo %d\n", dependiente_minima);
 		*(chostos_minimos + i) = *(chostos_minimos + dependiente_minima)
 				+ *(alturas_arboles + i) * *(costos_corte + dependiente_minima);
-		printf("el minimo costo para cortar %d es %lu\n", i,
+		caca_log_debug1("el minimo costo para cortar %d es %lu\n", i,
 				*(chostos_minimos + i));
 	}
 }
@@ -357,7 +382,7 @@ void taladores_ogts_encuentra_chosto_minimo_no_optimizado() {
 	caca_log_debug("añadiendo linea 1");
 
 	for (i = 3; i <= num_arboles; i++) {
-		caca_log_debug("encontrando chosto minimo para %d", i);
+		caca_log_debug1("encontrando chosto minimo para %d\n", i);
 
 		chosto_minimo = TALADORES_OGTS_VALOR_INVALIDO;
 		for (j = 1; j < i; j++) {
@@ -369,11 +394,11 @@ void taladores_ogts_encuentra_chosto_minimo_no_optimizado() {
 			}
 		}
 
-		printf("el dep minimo %d\n", dependiente_minima);
+		caca_log_debug1("el dep minimo %d\n", dependiente_minima);
 
 		*(chostos_minimos + i) = *(chostos_minimos + dependiente_minima)
 				+ *(alturas_arboles + i) * *(costos_corte + dependiente_minima);
-		printf("el minimo costo para cortar %d es %lu\n", i,
+		caca_log_debug1("el minimo costo para cortar %d es %lu\n", i,
 				*(chostos_minimos + i));
 	}
 }
@@ -426,14 +451,20 @@ void taladores_ogts_main() {
 			caca_arreglo_a_cadena(costos_corte, num_arboles + 1, buffer));
 
 	if (num_arboles == 1) {
-		*(chostos_minimos + num_arboles) = 1;
+		*(chostos_minimos + num_arboles) = 0;
 		return;
 	}
 
 	if (num_arboles == 2) {
-		*(chostos_minimos + num_arboles) = *(alturas_arboles + 2)
-				* *(costos_corte + 1);
+		*(chostos_minimos + num_arboles) = *(alturas_arboles + num_arboles)
+				* *(costos_corte + num_arboles - 1);
 		return;
+	}
+
+	if (num_arboles > 100) {
+		while (1) {
+			i++;
+		};
 	}
 
 	pseudopila = calloc(1, sizeof(taladores_ogts_pseudopila_lineas));
@@ -441,7 +472,9 @@ void taladores_ogts_main() {
 	taladores_ogts_init_pseudo_pila(pseudopila);
 
 	taladores_ogts_encuentra_chosto_minimo();
-//	taladores_ogts_encuentra_chosto_minimo_no_optimizado();
+	/*
+	 taladores_ogts_encuentra_chosto_minimo_no_optimizado();
+	 */
 	caca_log_debug("q mierda pasa");
 }
 
