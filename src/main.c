@@ -48,8 +48,10 @@ typedef enum BOOLEANOS {
 typedef struct taladores_ogts_pseudopila_lineas {
 	tipo_dato indice_caminado_intersexion;
 	tipo_dato total_intersexiones;
+	tipo_dato total_intersexiones_abcisas;
 	tipo_dato total_lineas;
 	double ordenadas_de_intersexiones[TALADORES_OGTS_MAX_ELEMS ];
+	double abcisas_de_intersexiones[TALADORES_OGTS_MAX_ELEMS ];
 	tipo_dato indices_lineas[TALADORES_OGTS_MAX_ELEMS ];
 } taladores_ogts_pseudopila_lineas;
 
@@ -82,7 +84,10 @@ static void caca_lee_matrix_dimensiones_conocidas(tipo_dato *matrix,
 
 #define caca_log_debug(formato, args...) 0
 #define caca_imprime_matrix(matrix, num_filas, num_columnas, num_columnas_fijo) 0
+/*
 #define caca_log_debug1 printf
+ */
+#define caca_log_debug1(formato, args...) printf("")
 
 int lee_matrix_long_stdin(tipo_dato *matrix, int *num_filas, int *num_columnas,
 		int num_max_filas, int num_max_columnas) {
@@ -175,6 +180,11 @@ void taladores_ogts_anade_linea(tipo_dato indice_linea) {
 	double intersexion_nueva = 0;
 	double abcisa = 0;
 
+	tipo_dato chosto_minimo_ordenada_actual = 0;
+	tipo_dato chosto_minimo_ordenada_nueva = 0;
+	tipo_dato intersexion_ordenada_actual = 0;
+	tipo_dato indice_linea_actual = 0;
+
 	switch (pseudopila->total_lineas) {
 	case 0:
 		caca_log_debug("inicialmente hay 0 linea, se añadira %d", indice_linea);
@@ -186,18 +196,31 @@ void taladores_ogts_anade_linea(tipo_dato indice_linea) {
 		intersexion_nueva = taladores_ogts_determina_ordenada_interseccion(
 				indice_linea,
 				*(pseudopila->indices_lineas + pseudopila->total_lineas - 1));
+		abcisa = taladores_ogts_determina_ordenada_interseccion(indice_linea,
+				*(pseudopila->indices_lineas + pseudopila->total_lineas - 1));
 		*(pseudopila->indices_lineas + pseudopila->total_lineas) = indice_linea;
 		*(pseudopila->ordenadas_de_intersexiones
 				+ pseudopila->total_intersexiones) = intersexion_nueva;
+		*(pseudopila->abcisas_de_intersexiones
+				+ pseudopila->total_intersexiones_abcisas) = abcisa;
 
 		caca_log_debug("se añade 1era intersex %f", intersexion_nueva);
 
 		pseudopila->total_lineas++;
 		pseudopila->total_intersexiones++;
+		pseudopila->total_intersexiones_abcisas++;
 		break;
 	default:
 		caca_log_debug("inicialmente hay 2+ linea");
+
 		while (pseudopila->total_lineas > 1) {
+			intersexion_ordenada_actual =
+					*(pseudopila->ordenadas_de_intersexiones
+							+ pseudopila->total_intersexiones - 1);
+
+			indice_linea_actual = *(pseudopila->indices_lineas
+					+ pseudopila->total_lineas - 1);
+
 			intersexion_nueva =
 					taladores_ogts_determina_ordenada_interseccion(indice_linea,
 							*(pseudopila->indices_lineas
@@ -206,12 +229,10 @@ void taladores_ogts_anade_linea(tipo_dato indice_linea) {
 					taladores_ogts_determina_abcisa_interseccion(indice_linea,
 							*(pseudopila->indices_lineas
 									+ pseudopila->total_lineas - 2));
+
 			caca_log_debug("la nueva intersexion es %f, comparandola con %f",
-					intersexion_nueva,
-					*(pseudopila->ordenadas_de_intersexiones + pseudopila->total_intersexiones - 1));
-			if (intersexion_nueva
-					<= *(pseudopila->ordenadas_de_intersexiones
-							+ pseudopila->total_intersexiones - 1)) {
+					intersexion_nueva, intersexion_ordenada_actual);
+			if (floor(intersexion_nueva) < floor(intersexion_ordenada_actual)) {
 
 				caca_log_debug("se va a kitar linea %d en pos %d",
 						*(pseudopila->indices_lineas + pseudopila->total_lineas - 1),
@@ -225,12 +246,53 @@ void taladores_ogts_anade_linea(tipo_dato indice_linea) {
 				*(pseudopila->ordenadas_de_intersexiones
 						+ pseudopila->total_intersexiones - 1) =
 						TALADORES_OGTS_VALOR_INVALIDO;
+				*(pseudopila->abcisas_de_intersexiones
+						+ pseudopila->total_intersexiones_abcisas - 1) =
+						TALADORES_OGTS_VALOR_INVALIDO;
 
 				pseudopila->total_lineas--;
 				pseudopila->total_intersexiones--;
+				pseudopila->total_intersexiones_abcisas--;
 			} else {
-				caca_log_debug("a la mierda del ciclo con intersex %f",
-						intersexion_nueva);
+				if (floor(intersexion_nueva)
+						== floor(intersexion_ordenada_actual)) {
+					chosto_minimo_ordenada_actual = *(costos_corte
+							+ indice_linea_actual)
+							* *(alturas_arboles + indice_linea + 1)
+							+ *(chostos_minimos + indice_linea_actual);
+
+					chosto_minimo_ordenada_nueva =
+							*(costos_corte + indice_linea)
+									* *(alturas_arboles + indice_linea + 1)
+									+ *(chostos_minimos + indice_linea);
+
+					if (chosto_minimo_ordenada_nueva
+							< chosto_minimo_ordenada_actual) {
+						*(pseudopila->indices_lineas + pseudopila->total_lineas
+								- 1) = TALADORES_OGTS_VALOR_INVALIDO;
+						*(pseudopila->ordenadas_de_intersexiones
+								+ pseudopila->total_intersexiones - 1) =
+								TALADORES_OGTS_VALOR_INVALIDO;
+						*(pseudopila->abcisas_de_intersexiones
+								+ pseudopila->total_intersexiones_abcisas - 1) =
+								TALADORES_OGTS_VALOR_INVALIDO;
+
+					} else {
+						indice_linea = *(pseudopila->indices_lineas
+								+ pseudopila->total_lineas - 1);
+						intersexion_nueva =
+								*(pseudopila->ordenadas_de_intersexiones
+										+ pseudopila->total_intersexiones - 1);
+						abcisa = *(pseudopila->abcisas_de_intersexiones
+								+ pseudopila->total_intersexiones_abcisas - 1);
+					}
+					pseudopila->total_lineas--;
+					pseudopila->total_intersexiones--;
+					pseudopila->total_intersexiones_abcisas--;
+				} else {
+					caca_log_debug("a la mierda del ciclo con intersex %f",
+							intersexion_nueva);
+				}
 				break;
 			}
 
@@ -238,6 +300,8 @@ void taladores_ogts_anade_linea(tipo_dato indice_linea) {
 
 		*(pseudopila->ordenadas_de_intersexiones
 				+ pseudopila->total_intersexiones) = intersexion_nueva;
+		*(pseudopila->abcisas_de_intersexiones
+				+ pseudopila->total_intersexiones_abcisas) = abcisa;
 		*(pseudopila->indices_lineas + pseudopila->total_lineas) = indice_linea;
 
 		caca_log_debug("nueva linea en %d es %d", pseudopila->total_lineas,
@@ -247,6 +311,7 @@ void taladores_ogts_anade_linea(tipo_dato indice_linea) {
 
 		pseudopila->total_lineas++;
 		pseudopila->total_intersexiones++;
+		pseudopila->total_intersexiones_abcisas++;
 
 		if (pseudopila->indice_caminado_intersexion
 				> pseudopila->total_intersexiones) {
@@ -461,11 +526,13 @@ void taladores_ogts_main() {
 		return;
 	}
 
+	/*
 	if (num_arboles > 100) {
 		while (1) {
 			i++;
 		};
 	}
+	*/
 
 	pseudopila = calloc(1, sizeof(taladores_ogts_pseudopila_lineas));
 
