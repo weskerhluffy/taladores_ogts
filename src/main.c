@@ -84,10 +84,10 @@ static void caca_lee_matrix_dimensiones_conocidas(tipo_dato *matrix,
 
 #define caca_log_debug(formato, args...) 0
 #define caca_imprime_matrix(matrix, num_filas, num_columnas, num_columnas_fijo) 0
- #define caca_log_debug1(formato, args...) 0
 /*
-#define caca_log_debug1 printf
+ #define caca_log_debug1(formato, args...) 0
  */
+#define caca_log_debug1 printf
 
 int lee_matrix_long_stdin(tipo_dato *matrix, int *num_filas, int *num_columnas,
 		int num_max_filas, int num_max_columnas) {
@@ -169,12 +169,14 @@ double taladores_ogts_determina_abcisa_interseccion(
 }
 
 void taladores_ogts_anade_linea(tipo_dato indice_linea) {
+	bool nuevo_mejor = falso;
 	double intersexion_nueva = 0;
-	double abcisa = 0;
+	double abcisa_nueva = 0;
+	double intersexion_ordenada_actual = 0;
+	double abcisa_actual = 0;
 
 	tipo_dato chosto_minimo_ordenada_actual = 0;
 	tipo_dato chosto_minimo_ordenada_nueva = 0;
-	tipo_dato intersexion_ordenada_actual = 0;
 	tipo_dato indice_linea_actual = 0;
 
 	switch (pseudopila->total_lineas) {
@@ -188,13 +190,14 @@ void taladores_ogts_anade_linea(tipo_dato indice_linea) {
 		intersexion_nueva = taladores_ogts_determina_ordenada_interseccion(
 				indice_linea,
 				*(pseudopila->indices_lineas + pseudopila->total_lineas - 1));
-		abcisa = taladores_ogts_determina_abcisa_interseccion(indice_linea,
+		abcisa_nueva = taladores_ogts_determina_abcisa_interseccion(
+				indice_linea,
 				*(pseudopila->indices_lineas + pseudopila->total_lineas - 1));
 		*(pseudopila->indices_lineas + pseudopila->total_lineas) = indice_linea;
 		*(pseudopila->ordenadas_de_intersexiones
 				+ pseudopila->total_intersexiones) = intersexion_nueva;
 		*(pseudopila->abcisas_de_intersexiones
-				+ pseudopila->total_intersexiones_abcisas) = abcisa;
+				+ pseudopila->total_intersexiones_abcisas) = abcisa_nueva;
 
 		caca_log_debug("se añade 1era intersex %f", intersexion_nueva);
 
@@ -210,6 +213,9 @@ void taladores_ogts_anade_linea(tipo_dato indice_linea) {
 					*(pseudopila->ordenadas_de_intersexiones
 							+ pseudopila->total_intersexiones - 1);
 
+			abcisa_actual = *(pseudopila->abcisas_de_intersexiones
+					+ pseudopila->total_intersexiones_abcisas - 1);
+
 			indice_linea_actual = *(pseudopila->indices_lineas
 					+ pseudopila->total_lineas - 1);
 
@@ -217,7 +223,7 @@ void taladores_ogts_anade_linea(tipo_dato indice_linea) {
 					taladores_ogts_determina_ordenada_interseccion(indice_linea,
 							*(pseudopila->indices_lineas
 									+ pseudopila->total_lineas - 2));
-			abcisa =
+			abcisa_nueva =
 					taladores_ogts_determina_abcisa_interseccion(indice_linea,
 							*(pseudopila->indices_lineas
 									+ pseudopila->total_lineas - 2));
@@ -225,7 +231,6 @@ void taladores_ogts_anade_linea(tipo_dato indice_linea) {
 			caca_log_debug("la nueva intersexion es %f, comparandola con %f",
 					intersexion_nueva, intersexion_ordenada_actual);
 			if (floor(intersexion_nueva) < floor(intersexion_ordenada_actual)) {
-
 				caca_log_debug("se va a kitar linea %d en pos %d",
 						*(pseudopila->indices_lineas + pseudopila->total_lineas - 1),
 						pseudopila->total_lineas - 1);
@@ -248,18 +253,22 @@ void taladores_ogts_anade_linea(tipo_dato indice_linea) {
 			} else {
 				if (floor(intersexion_nueva)
 						== floor(intersexion_ordenada_actual)) {
-					chosto_minimo_ordenada_actual = *(costos_corte
-							+ indice_linea_actual)
-							* *(alturas_arboles + indice_linea + 1)
-							+ *(chostos_minimos + indice_linea_actual);
 
-					chosto_minimo_ordenada_nueva =
-							*(costos_corte + indice_linea)
-									* *(alturas_arboles + indice_linea + 1)
-									+ *(chostos_minimos + indice_linea);
-
-					if (chosto_minimo_ordenada_nueva
-							< chosto_minimo_ordenada_actual) {
+					if (abcisa_nueva < abcisa_actual) {
+						nuevo_mejor = verdadero;
+					} else {
+						if (abcisa_nueva == abcisa_actual) {
+							if (*(costos_corte + indice_linea)
+									< *(costos_corte + indice_linea_actual)) {
+								nuevo_mejor = verdadero;
+							} else {
+								nuevo_mejor = falso;
+							}
+						} else {
+							nuevo_mejor = falso;
+						}
+					}
+					if (nuevo_mejor) {
 						*(pseudopila->indices_lineas + pseudopila->total_lineas
 								- 1) = TALADORES_OGTS_VALOR_INVALIDO;
 						*(pseudopila->ordenadas_de_intersexiones
@@ -268,16 +277,16 @@ void taladores_ogts_anade_linea(tipo_dato indice_linea) {
 						*(pseudopila->abcisas_de_intersexiones
 								+ pseudopila->total_intersexiones_abcisas - 1) =
 								TALADORES_OGTS_VALOR_INVALIDO;
-
 					} else {
 						indice_linea = *(pseudopila->indices_lineas
 								+ pseudopila->total_lineas - 1);
 						intersexion_nueva =
 								*(pseudopila->ordenadas_de_intersexiones
 										+ pseudopila->total_intersexiones - 1);
-						abcisa = *(pseudopila->abcisas_de_intersexiones
+						abcisa_nueva = *(pseudopila->abcisas_de_intersexiones
 								+ pseudopila->total_intersexiones_abcisas - 1);
 					}
+
 					pseudopila->total_lineas--;
 					pseudopila->total_intersexiones--;
 					pseudopila->total_intersexiones_abcisas--;
@@ -293,7 +302,7 @@ void taladores_ogts_anade_linea(tipo_dato indice_linea) {
 		*(pseudopila->ordenadas_de_intersexiones
 				+ pseudopila->total_intersexiones) = intersexion_nueva;
 		*(pseudopila->abcisas_de_intersexiones
-				+ pseudopila->total_intersexiones_abcisas) = abcisa;
+				+ pseudopila->total_intersexiones_abcisas) = abcisa_nueva;
 		*(pseudopila->indices_lineas + pseudopila->total_lineas) = indice_linea;
 
 		caca_log_debug("nueva linea en %d es %d", pseudopila->total_lineas,
@@ -545,9 +554,9 @@ void taladores_ogts_main() {
 
 		taladores_ogts_init_pseudo_pila(pseudopila);
 
-		taladores_ogts_encuentra_chosto_minimo_no_optimizado();
+		taladores_ogts_encuentra_chosto_minimo();
 		/*
-		 taladores_ogts_encuentra_chosto_minimo();
+		 taladores_ogts_encuentra_chosto_minimo_no_optimizado();
 		 */
 		caca_log_debug("q mierda pasa");
 
@@ -580,48 +589,6 @@ void taladores_ogts_main() {
 	free(chostos_minimos);
 	free(datos_arboles);
 
-}
-
-/* TODO: bandera para arreglo de arreglos */
-/* TODO: numero de columnas variable x fila */
-static void caca_lee_matrix_dimensiones_conocidas(tipo_dato *matrix,
-		int num_filas, int num_columnas) {
-	int caca = 0;
-	int idx_cols = 0;
-	int idx_fils = 0;
-	tipo_dato numero = 0;
-
-	char *linea = NULL;
-
-	linea = calloc(1000, sizeof(char));
-
-	while ((caca = fgetc(stdin)) != EOF) {
-		if (caca == '\n') {
-			idx_fils++;
-		}
-	}
-	assert(num_filas == idx_fils);
-
-	return;
-
-	/*
-	 while (fgets(linea, 1000, stdin)) {
-	 idx_fils++;
-	 }
-	 assert(num_filas == idx_fils);
-
-	 idx_fils = 0;
-	 while (scanf("%lu ", &numero) == 1 && idx_fils < num_filas) {
-	 *(matrix + idx_fils * num_columnas + idx_cols) = numero;
-	 idx_cols++;
-	 if (idx_cols == num_columnas) {
-	 idx_cols = 0;
-	 idx_fils++;
-	 }
-	 }
-	 assert(num_filas == idx_fils);
-	 */
-	free(linea);
 }
 
 int main(void) {
