@@ -1,0 +1,16 @@
+settings set target.run-args < como.txt
+#settings set target.run-args < caca6.txt
+#br s -n  aladores_ogts_determina_ordenada_interseccion
+#br s -f main.c -l 149
+br s -f main.c -l 536
+command alias ordenadas memory read -s 8 -f f -c 6 &pseudopila->ordenadas_de_intersexiones
+command alias abcisas memory read -s 8 -f f -c 6 &pseudopila->abcisas_de_intersexiones
+command alias lineas memory read -s 8 -f int64_t -c 10 &pseudopila->indices_lineas
+command alias chostos memory read -s 8 -f int64_t -c 10 chostos_minimos
+#br com add
+#print ordenada
+#ordenadas
+#abcisas
+#lineas
+#c
+#DONE

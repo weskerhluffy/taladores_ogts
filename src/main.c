@@ -6,7 +6,7 @@
 
 int i = 0;
 
-#define tipo_dato unsigned long
+#define tipo_dato unsigned long long
 
 #define MAX_NODOS 101
 #define TAM_MAX_LINEA 1.5E6
@@ -46,7 +46,7 @@ typedef enum BOOLEANOS {
 #define TALADORES_OGTS_MAX_VALOR (long)1E9
 
 typedef struct taladores_ogts_pseudopila_lineas {
-	tipo_dato indice_caminado_intersexion;
+	tipo_dato indice_caminado_linea;
 	tipo_dato total_intersexiones;
 	tipo_dato total_intersexiones_abcisas;
 	tipo_dato total_lineas;
@@ -85,9 +85,9 @@ static void caca_lee_matrix_dimensiones_conocidas(tipo_dato *matrix,
 #define caca_log_debug(formato, args...) 0
 #define caca_imprime_matrix(matrix, num_filas, num_columnas, num_columnas_fijo) 0
 /*
- #define caca_log_debug1(formato, args...) 0
+ #define caca_log_debug1 printf
  */
-#define caca_log_debug1 printf
+#define caca_log_debug1(formato, args...) 0
 
 int lee_matrix_long_stdin(tipo_dato *matrix, int *num_filas, int *num_columnas,
 		int num_max_filas, int num_max_columnas) {
@@ -230,7 +230,7 @@ void taladores_ogts_anade_linea(tipo_dato indice_linea) {
 
 			caca_log_debug("la nueva intersexion es %f, comparandola con %f",
 					intersexion_nueva, intersexion_ordenada_actual);
-			if (floor(intersexion_nueva) < floor(intersexion_ordenada_actual)) {
+			if (intersexion_nueva < intersexion_ordenada_actual) {
 				caca_log_debug("se va a kitar linea %d en pos %d",
 						*(pseudopila->indices_lineas + pseudopila->total_lineas - 1),
 						pseudopila->total_lineas - 1);
@@ -251,49 +251,6 @@ void taladores_ogts_anade_linea(tipo_dato indice_linea) {
 				pseudopila->total_intersexiones--;
 				pseudopila->total_intersexiones_abcisas--;
 			} else {
-				if (floor(intersexion_nueva)
-						== floor(intersexion_ordenada_actual)) {
-
-					if (abcisa_nueva < abcisa_actual) {
-						nuevo_mejor = verdadero;
-					} else {
-						if (abcisa_nueva == abcisa_actual) {
-							if (*(costos_corte + indice_linea)
-									< *(costos_corte + indice_linea_actual)) {
-								nuevo_mejor = verdadero;
-							} else {
-								nuevo_mejor = falso;
-							}
-						} else {
-							nuevo_mejor = falso;
-						}
-					}
-					if (nuevo_mejor) {
-						*(pseudopila->indices_lineas + pseudopila->total_lineas
-								- 1) = TALADORES_OGTS_VALOR_INVALIDO;
-						*(pseudopila->ordenadas_de_intersexiones
-								+ pseudopila->total_intersexiones - 1) =
-								TALADORES_OGTS_VALOR_INVALIDO;
-						*(pseudopila->abcisas_de_intersexiones
-								+ pseudopila->total_intersexiones_abcisas - 1) =
-								TALADORES_OGTS_VALOR_INVALIDO;
-					} else {
-						indice_linea = *(pseudopila->indices_lineas
-								+ pseudopila->total_lineas - 1);
-						intersexion_nueva =
-								*(pseudopila->ordenadas_de_intersexiones
-										+ pseudopila->total_intersexiones - 1);
-						abcisa_nueva = *(pseudopila->abcisas_de_intersexiones
-								+ pseudopila->total_intersexiones_abcisas - 1);
-					}
-
-					pseudopila->total_lineas--;
-					pseudopila->total_intersexiones--;
-					pseudopila->total_intersexiones_abcisas--;
-				} else {
-					caca_log_debug("a la mierda del ciclo con intersex %f",
-							intersexion_nueva);
-				}
 				break;
 			}
 
@@ -314,13 +271,11 @@ void taladores_ogts_anade_linea(tipo_dato indice_linea) {
 		pseudopila->total_intersexiones++;
 		pseudopila->total_intersexiones_abcisas++;
 
-		if (pseudopila->indice_caminado_intersexion
-				>= pseudopila->total_intersexiones) {
+		if (pseudopila->indice_caminado_linea > pseudopila->total_lineas) {
 			caca_log_debug("se corrige el indice caminado de %d a %d",
-					pseudopila->indice_caminado_intersexion,
-					pseudopila->total_intersexiones);
-			pseudopila->indice_caminado_intersexion =
-					pseudopila->total_intersexiones;
+					pseudopila->indice_caminado_lineas,
+					pseudopila->total_lineas);
+			pseudopila->indice_caminado_linea = pseudopila->total_lineas;
 		}
 
 		break;
@@ -328,64 +283,42 @@ void taladores_ogts_anade_linea(tipo_dato indice_linea) {
 }
 
 tipo_dato taladores_ogts_busqueda_minimo_en_lineas(tipo_dato ordenada) {
-	int idx_intersexion = 0;
-	double ordenada_pf = 0;
-
 	bool ordenadas_iguales = falso;
 	tipo_dato minimo = 0;
-	tipo_dato chosto_min_izq = 0;
-	tipo_dato chosto_min_der = 0;
-	tipo_dato indice_linea_izq = 0;
-	tipo_dato indice_linea_der = 0;
+	tipo_dato chosto_min = 0;
+	tipo_dato chosto_min_actual = 0;
+	tipo_dato linea_actual = 0;
+	tipo_dato ordenada_pf = 0;
+	tipo_dato idx_linea = 0;
+	tipo_dato idx_linea_min = 0;
 
 	ordenada_pf = *(alturas_arboles + ordenada);
 
-	for (idx_intersexion = pseudopila->indice_caminado_intersexion;
-			idx_intersexion < pseudopila->total_intersexiones;
-			idx_intersexion++) {
+	chosto_min = TALADORES_OGTS_VALOR_INVALIDO;
+	for (idx_linea = pseudopila->indice_caminado_linea;
+			idx_linea < pseudopila->total_lineas; idx_linea++) {
 
-		caca_log_debug("comparando ordebada %f con intersex %f en pos %d",
-				ordenada_pf,
-				*(pseudopila->ordenadas_de_intersexiones + idx_intersexion),
-				idx_intersexion);
+		linea_actual = *(pseudopila->indices_lineas + idx_linea);
 
-		if (ordenada_pf
-				< *(pseudopila->ordenadas_de_intersexiones + idx_intersexion)) {
-			break;
-		}
-		if (ordenada_pf
-				== *(pseudopila->ordenadas_de_intersexiones + idx_intersexion)) {
-			ordenadas_iguales = verdadero;
-			break;
+		chosto_min_actual = (tipo_dato) ordenada_pf
+				* *(costos_corte + linea_actual)
+				+ *(chostos_minimos + linea_actual);
+
+		if (chosto_min_actual < chosto_min) {
+			minimo = linea_actual;
+			chosto_min = chosto_min_actual;
+			idx_linea_min = idx_linea;
 		}
 
 	}
 
-	if (ordenadas_iguales) {
-		indice_linea_izq = *(pseudopila->indices_lineas + idx_intersexion);
-		indice_linea_der = *(pseudopila->indices_lineas + idx_intersexion + 1);
-		chosto_min_izq = (tipo_dato) ordenada_pf
-				* *(costos_corte + indice_linea_izq)
-				+ *(chostos_minimos + indice_linea_izq);
-		chosto_min_der = (tipo_dato) ordenada_pf
-				* *(costos_corte + indice_linea_der)
-				+ *(chostos_minimos + indice_linea_der);
-		if (chosto_min_der < chosto_min_izq) {
-			minimo = indice_linea_der;
-		} else {
-			minimo = indice_linea_izq;
-		}
-	} else {
-		minimo = *(pseudopila->indices_lineas + idx_intersexion);
-	}
+	caca_log_debug("el minimo calculado es %d en ilnea %d", minimo,
+			idx_linea_min);
 
-	caca_log_debug("el minimo calculado es %d en pos intersex %d", minimo,
-			idx_intersexion);
-
-	if (idx_intersexion == pseudopila->total_intersexiones) {
-		pseudopila->indice_caminado_intersexion = idx_intersexion - 1;
+	if (idx_linea_min == pseudopila->total_lineas) {
+		pseudopila->indice_caminado_linea = idx_linea_min - 1;
 	} else {
-		pseudopila->indice_caminado_intersexion = idx_intersexion;
+		pseudopila->indice_caminado_linea = idx_linea_min;
 	}
 
 	return minimo;
@@ -521,6 +454,16 @@ void taladores_ogts_main() {
 
 		assert(num_arboles <= TALADORES_OGTS_MAX_ELEMS);
 
+		/*
+		 if (num_arboles >= 7 && num_arboles <= 100000) {
+		 if (total_casos > 8) {
+		 abort();
+		 while (1) {
+		 total_casos++;
+		 }
+		 }
+		 */
+
 		memcpy(alturas_arboles + 1, datos_arboles+TALADORES_OGTS_MAX_COLS_INPUT,
 				(TALADORES_OGTS_MAX_COLS_INPUT)* sizeof(tipo_dato));
 		memcpy(costos_corte + 1,
@@ -535,8 +478,7 @@ void taladores_ogts_main() {
 
 		caca_log_debug1("el num de arboles %lu\n", num_arboles);
 		caca_log_debug1("las alturas %s\n",
-				caca_arreglo_a_cadena(alturas_arboles, num_arboles + 1,
-						buffer));
+				caca_arreglo_a_cadena(alturas_arboles, num_arboles + 1, buffer));
 		caca_log_debug1("llos chostos %s\n",
 				caca_arreglo_a_cadena(costos_corte, num_arboles + 1, buffer));
 
@@ -548,7 +490,6 @@ void taladores_ogts_main() {
 		if (num_arboles == 2) {
 			*(chostos_minimos + num_arboles) = *(alturas_arboles + num_arboles)
 					* *(costos_corte + num_arboles - 1);
-			printf("%lu\n", *(chostos_minimos + num_arboles));
 			goto caca;
 		}
 
@@ -560,9 +501,9 @@ void taladores_ogts_main() {
 		 */
 		caca_log_debug("q mierda pasa");
 
-		printf("%lu\n", *(chostos_minimos + num_arboles));
-
 		caca:
+
+		printf("%lu\n", *(chostos_minimos + num_arboles));
 
 		i = 0;
 		memset(alturas_arboles, 0, TALADORES_OGTS_MAX_COLS_INPUT+1);
@@ -578,12 +519,13 @@ void taladores_ogts_main() {
 	}
 
 	/*
-	 if (total_casos == 7) {
-	 while (1) {
-	 total_casos++;
-	 }
-	 }
-	 */
+	if (total_casos >= 7) {
+		abort();
+		while (1) {
+			total_casos++;
+		}
+	}
+	*/
 	free(alturas_arboles);
 	free(costos_corte);
 	free(chostos_minimos);
