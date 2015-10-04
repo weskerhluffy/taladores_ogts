@@ -1,0 +1,9 @@
+el dep minimo 1
+el minimo costo para cortar 3 es 18
+el dep minimo 3
+el minimo costo para cortar 4 es 58
+el dep minimo 4
+el minimo costo para cortar 5 es 118
+el dep minimo 4
+el minimo costo para cortar 6 es 148
+148

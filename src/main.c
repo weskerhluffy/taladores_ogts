@@ -505,12 +505,17 @@ void taladores_ogts_main() {
 			goto caca;
 		}
 
+		for (i = 2; i <= num_arboles; i++) {
+			assert(*(alturas_arboles + i) > *(alturas_arboles + i - 1));
+			assert(*(costos_corte + i) < *(costos_corte + i - 1));
+		}
+
 		taladores_ogts_init_pseudo_pila(pseudopila);
 
 		/*
-		 taladores_ogts_encuentra_chosto_minimo_no_optimizado();
-		 */
 		taladores_ogts_encuentra_chosto_minimo();
+		 */
+		 taladores_ogts_encuentra_chosto_minimo_no_optimizado();
 		caca_log_debug("q mierda pasa");
 
 		caca:
