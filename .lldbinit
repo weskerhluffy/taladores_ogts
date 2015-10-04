@@ -1,4 +1,5 @@
-settings set target.run-args < como.txt
+settings set target.run-args < caca10.txt
+#settings set target.run-args < como.txt
 #settings set target.run-args < caca6.txt
 #br s -n  aladores_ogts_determina_ordenada_interseccion
 #br s -f main.c -l 149
