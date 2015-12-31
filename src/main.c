@@ -6,6 +6,21 @@
 #include <limits.h>
 #include <string.h>
 
+
+#ifdef __LP64__
+#define	ULONG_MAX	0xffffffffffffffffUL	/* max unsigned long */
+#define	LONG_MAX	0x7fffffffffffffffL	/* max signed long */
+#define	LONG_MIN	(-0x7fffffffffffffffL-1) /* min signed long */
+#else /* !__LP64__ */
+#define	ULONG_MAX	0xffffffffUL	/* max unsigned long */
+#define	LONG_MAX	2147483647L	/* max signed long */
+#define	LONG_MIN	(-2147483647L-1) /* min signed long */
+#endif /* __LP64__ */
+
+#define	ULLONG_MAX	0xffffffffffffffffULL	/* max unsigned long long */
+#define	LLONG_MAX	0x7fffffffffffffffLL	/* max signed long long */
+#define	LLONG_MIN	(-0x7fffffffffffffffLL-1) /* min signed long long */
+
 int i = 0;
 
 #define tipo_dato unsigned long long
@@ -91,8 +106,10 @@ static void caca_lee_matrix_dimensiones_conocidas(tipo_dato *matrix,
  */
 #define caca_log_debug1(formato, args...) 0
 
-//#define assert_timeout(condition) if(!(condition)){printf("fuck\n");while(1);}
-//#define assert_timeout(condition) if(!(condition)){printf("fuck\n");}
+/*
+#define assert_timeout(condition) if(!(condition)){printf("fuck\n");while(1);}
+#define assert_timeout(condition) if(!(condition)){printf("fuck\n");}
+*/
 #define assert_timeout(condition) assert(condition)
 
 int lee_matrix_long_stdin(tipo_dato *matrix, int *num_filas, int *num_columnas,
@@ -105,6 +122,10 @@ int lee_matrix_long_stdin(tipo_dato *matrix, int *num_filas, int *num_columnas,
 	char *linea = NULL;
 
 	linea = calloc(TAM_MAX_LINEA, sizeof(char));
+
+	if (num_columnas) {
+		*num_columnas = 0;
+	}
 
 	while (indice_filas < num_max_filas && fgets(linea, TAM_MAX_LINEA, stdin)) {
 		indice_columnas = 0;
@@ -241,10 +262,10 @@ void taladores_ogts_anade_linea(tipo_dato indice_linea) {
 			caca_log_debug("la nueva intersexion es %f, comparandola con %f",
 					intersexion_nueva, intersexion_ordenada_actual);
 			/*
-			assert_timeout(
-					(intersexion_nueva < intersexion_ordenada_actual)
-							|| (abcisa_nueva >= abcisa_actual));
-							*/
+			 assert_timeout(
+			 (intersexion_nueva < intersexion_ordenada_actual)
+			 || (abcisa_nueva >= abcisa_actual));
+			 */
 			if (intersexion_nueva < intersexion_ordenada_actual) {
 				caca_log_debug("se va a kitar linea %d en pos %d",
 						*(pseudopila->indices_lineas + pseudopila->total_lineas - 1),
@@ -469,82 +490,89 @@ void taladores_ogts_main() {
 			TALADORES_OGTS_MAX_FILAS_INPUT, TALADORES_OGTS_MAX_COLS_INPUT);
 	total_casos++;
 
-	num_arboles = *datos_arboles;
-	caca_log_debug1("los datos %lu\n", num_arboles);
+	while (i) {
+		num_arboles = *datos_arboles;
+		caca_log_debug1("los datos %lu\n", num_arboles);
 
-	assert_timeout(num_arboles <= TALADORES_OGTS_MAX_ELEMS);
+		assert_timeout(num_arboles <= TALADORES_OGTS_MAX_ELEMS);
 
-	/*
-	 if (num_arboles == TALADORES_OGTS_MAX_ELEMS)
-	 */
-	/*
-	 if (num_arboles >= 100) {
-	 abort();
-	 while (1) {
-	 total_casos++;
-	 }
-	 }
-	 */
+		/*
+		 if (num_arboles == TALADORES_OGTS_MAX_ELEMS)
+		 */
+		/*
+		 if (num_arboles >= 100) {
+		 abort();
+		 while (1) {
+		 total_casos++;
+		 }
+		 }
+		 */
 
-	memcpy(alturas_arboles + 1, datos_arboles+TALADORES_OGTS_MAX_COLS_INPUT,
-			(TALADORES_OGTS_MAX_COLS_INPUT)* sizeof(tipo_dato));
-	memcpy(costos_corte + 1, datos_arboles + 2*(TALADORES_OGTS_MAX_COLS_INPUT),
-			(TALADORES_OGTS_MAX_COLS_INPUT)* sizeof(tipo_dato));
+		memcpy(alturas_arboles + 1, datos_arboles+TALADORES_OGTS_MAX_COLS_INPUT,
+				(TALADORES_OGTS_MAX_COLS_INPUT)* sizeof(tipo_dato));
+		memcpy(costos_corte + 1,
+				datos_arboles + 2*(TALADORES_OGTS_MAX_COLS_INPUT),
+				(TALADORES_OGTS_MAX_COLS_INPUT)* sizeof(tipo_dato));
 
-	for (i = 0; i <= num_arboles; i++) {
-		*(chostos_minimos + i) = TALADORES_OGTS_VALOR_INVALIDO;
-	}
-	*costos_corte = TALADORES_OGTS_VALOR_INVALIDO;
-	*alturas_arboles = TALADORES_OGTS_VALOR_INVALIDO;
-
-	caca_log_debug1("el num de arboles %lu\n", num_arboles);
-	caca_log_debug1("las alturas %s\n",
-			caca_arreglo_a_cadena(alturas_arboles, num_arboles + 1, buffer));
-	caca_log_debug1("llos chostos %s\n",
-			caca_arreglo_a_cadena(costos_corte, num_arboles + 1, buffer));
-
-	if (num_arboles == 1) {
-		*(chostos_minimos + num_arboles) = 0;
-		goto caca;
-	}
-
-	if (num_arboles == 2) {
-		*(chostos_minimos + num_arboles) = *(alturas_arboles + num_arboles)
-				* *(costos_corte + num_arboles - 1);
-		goto caca;
-	}
-
-	for (i = 1; i <= num_arboles; i++) {
-		if (i > 1) {
-			assert_timeout(*(alturas_arboles + i) > *(alturas_arboles + i - 1));
-			assert_timeout(*(costos_corte + i) < *(costos_corte + i - 1));
+		for (i = 0; i <= num_arboles; i++) {
+			*(chostos_minimos + i) = TALADORES_OGTS_VALOR_INVALIDO;
 		}
-		assert_timeout(*(alturas_arboles+i)<=TALADORES_OGTS_MAX_VALOR);
-		assert_timeout(*(costos_corte +i)<=TALADORES_OGTS_MAX_VALOR);
+		*costos_corte = TALADORES_OGTS_VALOR_INVALIDO;
+		*alturas_arboles = TALADORES_OGTS_VALOR_INVALIDO;
+
+		caca_log_debug1("el num de arboles %lu\n", num_arboles);
+		caca_log_debug1("las alturas %s\n",
+				caca_arreglo_a_cadena(alturas_arboles, num_arboles + 1, buffer));
+		caca_log_debug1("llos chostos %s\n",
+				caca_arreglo_a_cadena(costos_corte, num_arboles + 1, buffer));
+
+		if (num_arboles == 1) {
+			*(chostos_minimos + num_arboles) = 0;
+			goto caca;
+		}
+
+		if (num_arboles == 2) {
+			*(chostos_minimos + num_arboles) = *(alturas_arboles + num_arboles)
+					* *(costos_corte + num_arboles - 1);
+			goto caca;
+		}
+
+		for (i = 1; i <= num_arboles; i++) {
+			if (i > 1) {
+				assert_timeout(
+						*(alturas_arboles + i) > *(alturas_arboles + i - 1));
+				assert_timeout(*(costos_corte + i) < *(costos_corte + i - 1));
+			}
+			assert_timeout(*(alturas_arboles+i)<=TALADORES_OGTS_MAX_VALOR);
+			assert_timeout(*(costos_corte +i)<=TALADORES_OGTS_MAX_VALOR);
+		}
+		assert_timeout(*(alturas_arboles + 1) == 1);
+		assert_timeout(*(costos_corte + num_arboles) == 0);
+
+		taladores_ogts_init_pseudo_pila(pseudopila);
+		taladores_ogts_encuentra_chosto_minimo();
+		/*
+		 taladores_ogts_encuentra_chosto_minimo_no_optimizado();
+		 */
+		caca_log_debug("q mierda pasa");
+
+		caca:
+
+		printf("%llu\n", *(chostos_minimos + num_arboles));
+
+		i = 0;
+		memset(alturas_arboles, 0, TALADORES_OGTS_MAX_COLS_INPUT+1);
+		memset(costos_corte, 0, TALADORES_OGTS_MAX_COLS_INPUT+1);
+		memset(chostos_minimos, 0, TALADORES_OGTS_MAX_COLS_INPUT+1);
+		memset(datos_arboles, 0,
+				(TALADORES_OGTS_MAX_COLS_INPUT+1)*(TALADORES_OGTS_MAX_FILAS_INPUT));
+		memset(pseudopila, 0, sizeof(taladores_ogts_pseudopila_lineas));
+
+		lee_matrix_long_stdin(datos_arboles, &i, NULL,
+				TALADORES_OGTS_MAX_FILAS_INPUT, TALADORES_OGTS_MAX_COLS_INPUT);
+		total_casos++;
+
 	}
-	assert_timeout(*(alturas_arboles + 1) == 1);
-	assert_timeout(*(costos_corte + num_arboles) == 0);
-
-	taladores_ogts_init_pseudo_pila(pseudopila);
-	taladores_ogts_encuentra_chosto_minimo();
-	/*
-	 taladores_ogts_encuentra_chosto_minimo_no_optimizado();
-	 */
-	caca_log_debug("q mierda pasa");
-
-	caca:
-
-	printf("%llu\n", *(chostos_minimos + num_arboles));
-
-	i = 0;
-	memset(alturas_arboles, 0, TALADORES_OGTS_MAX_COLS_INPUT+1);
-	memset(costos_corte, 0, TALADORES_OGTS_MAX_COLS_INPUT+1);
-	memset(chostos_minimos, 0, TALADORES_OGTS_MAX_COLS_INPUT+1);
-	memset(datos_arboles, 0,
-			(TALADORES_OGTS_MAX_COLS_INPUT+1)*(TALADORES_OGTS_MAX_FILAS_INPUT));
-	memset(pseudopila, 0, sizeof(taladores_ogts_pseudopila_lineas));
-
-	total_casos++;
 
 	free(alturas_arboles);
 	free(costos_corte);
