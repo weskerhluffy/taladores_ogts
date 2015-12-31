@@ -1,5 +1,7 @@
 /*
  * escapecabron.h
+ * http://codeforces.com/problemset/problem/319/C
+ * http://acm.tju.edu.cn/toj/showp4074.html
  *
  *  Created on: 28/06/2015
  *      Author: ernesto
@@ -51,6 +53,7 @@ void taladores_ogts_main();
 void taladores_ogts_init_pseudo_pila(
 		taladores_ogts_pseudopila_lineas *pseudopila);
 
-static void caca_lee_matrix_dimensiones_conocidas(tipo_dato *matrix, int num_filas, int num_columnas);
+static void caca_lee_matrix_dimensiones_conocidas(tipo_dato *matrix,
+		int num_filas, int num_columnas);
 
 #endif /* TALADORESOGTS_H_ */

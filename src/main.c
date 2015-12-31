@@ -3,6 +3,7 @@
 
 #include <unistd.h>
 #include <assert.h>
+#include <limits.h>
 
 int i = 0;
 
@@ -93,7 +94,7 @@ int lee_matrix_long_stdin(tipo_dato *matrix, int *num_filas, int *num_columnas,
 		int num_max_filas, int num_max_columnas) {
 	int indice_filas = 0;
 	int indice_columnas = 0;
-	long numero = 0;
+	tipo_dato numero = 0;
 	char *siguiente_cadena_numero = NULL;
 	char *cadena_numero_actual = NULL;
 	char *linea = NULL;
@@ -105,7 +106,10 @@ int lee_matrix_long_stdin(tipo_dato *matrix, int *num_filas, int *num_columnas,
 		cadena_numero_actual = linea;
 		for (siguiente_cadena_numero = linea;; siguiente_cadena_numero =
 				cadena_numero_actual) {
-			numero = strtol(siguiente_cadena_numero, &cadena_numero_actual, 10);
+			numero = strtoll(siguiente_cadena_numero, &cadena_numero_actual,
+					10);
+			assert(
+					numero!=LLONG_MIN || numero!=LLONG_MAX || numero==ULLONG_MAX);
 			if (cadena_numero_actual == siguiente_cadena_numero) {
 				break;
 			}
@@ -459,22 +463,25 @@ void taladores_ogts_main() {
 			TALADORES_OGTS_MAX_FILAS_INPUT, TALADORES_OGTS_MAX_COLS_INPUT);
 	total_casos++;
 
-	while (i) {
+//	while (i)
+	{
 
 		num_arboles = *datos_arboles;
 		caca_log_debug1("los datos %lu\n", num_arboles);
 
 		assert(num_arboles <= TALADORES_OGTS_MAX_ELEMS);
 
-		/*		if (num_arboles >= 7 && num_arboles <= 100000) {
+		/*
+		 if (num_arboles == TALADORES_OGTS_MAX_ELEMS)
 		 */
 		/*
-		 if (num_arboles == TALADORES_OGTS_MAX_ELEMS) {
+		 if (num_arboles >= 100) {
 		 abort();
 		 while (1) {
 		 total_casos++;
 		 }
-		 }*/
+		 }
+		 */
 
 		memcpy(alturas_arboles + 1, datos_arboles+TALADORES_OGTS_MAX_COLS_INPUT,
 				(TALADORES_OGTS_MAX_COLS_INPUT)* sizeof(tipo_dato));
@@ -505,17 +512,22 @@ void taladores_ogts_main() {
 			goto caca;
 		}
 
-		for (i = 2; i <= num_arboles; i++) {
-			assert(*(alturas_arboles + i) > *(alturas_arboles + i - 1));
-			assert(*(costos_corte + i) < *(costos_corte + i - 1));
+		for (i = 1; i <= num_arboles; i++) {
+			if (i > 1) {
+				assert(*(alturas_arboles + i) > *(alturas_arboles + i - 1));
+				assert(*(costos_corte + i) < *(costos_corte + i - 1));
+			}
+			assert(*(alturas_arboles+i)<=TALADORES_OGTS_MAX_VALOR);
+			assert(*(costos_corte +i)<=TALADORES_OGTS_MAX_VALOR);
 		}
+		assert(*(alturas_arboles + 1) == 1);
+		assert(*(costos_corte + num_arboles) == 0);
 
 		taladores_ogts_init_pseudo_pila(pseudopila);
-
 		/*
-		taladores_ogts_encuentra_chosto_minimo();
+		 taladores_ogts_encuentra_chosto_minimo();
 		 */
-		 taladores_ogts_encuentra_chosto_minimo_no_optimizado();
+		taladores_ogts_encuentra_chosto_minimo_no_optimizado();
 		caca_log_debug("q mierda pasa");
 
 		caca:
